@@ -70,6 +70,22 @@ class AthleteByID(Resource):
 
         return athlete.to_dict(), 200
 
+class AthleteOpportunities(Resource):
+
+    def get(self, id):
+
+        athlete = Athlete.query.get(id)
+
+        if not athlete:
+            return {"error": "Athlete not found"}, 404
+
+        opportunities = [
+            opportunity.to_dict()
+            for opportunity in athlete.opportunities
+        ]
+
+        return opportunities, 200
+
 
 # =====================================================
 # SCOUT RESOURCES
@@ -232,6 +248,7 @@ class ApplicationByID(Resource):
 
 api.add_resource(AthleteList, '/athletes')
 api.add_resource(AthleteByID, '/athletes/<int:id>')
+api.add_resource(AthleteOpportunities, '/athletes/<int:id>/opportunities')
 
 api.add_resource(ScoutList, '/scouts')
 api.add_resource(ScoutByID, '/scouts/<int:id>')
