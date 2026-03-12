@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Athletes from './pages/Athletes';
 import AthleteDetail from './pages/AthleteDetail';
+import Scouts from './pages/Scouts';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/athletes" element={<Athletes />} />
           <Route path="/athletes/:id" element={<AthleteDetail />} />
+          <Route path="/scouts" element={<Scouts />} />
           {/* more routes coming */}
         </Routes>
       </div>
