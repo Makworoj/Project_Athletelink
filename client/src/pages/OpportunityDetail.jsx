@@ -1,36 +1,53 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function OpportunityDetail() {
   const { id } = useParams();
+  const { currentAthlete } = useAuth(); 
+
   const [opportunity, setOpportunity] = useState(null);
   const [applications, setApplications] = useState([]);
-  const [athletes, setAthletes] = useState([]);
-  const [selectedAthleteId, setSelectedAthleteId] = useState('');
+  const [athletes, setAthletes] = useState([]); 
+  const [selectedAthleteId, setSelectedAthleteId] = useState(''); 
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
   const [applyError, setApplyError] = useState(null);
 
   useEffect(() => {
-    Promise.all([
+    const fetches = [
       fetch(`http://127.0.0.1:5555/opportunities/${id}`).then(res => res.json()),
-      fetch('http://127.0.0.1:5555/applications').then(res => res.json()),
-      fetch('http://127.0.0.1:5555/athletes').then(res => res.json())
-    ])
+      fetch('http://127.0.0.1:5555/applications').then(res => res.json())
+    ];
+
+   
+    if (!currentAthlete) {
+      fetches.push(fetch('http://127.0.0.1:5555/athletes').then(res => res.json()));
+    }
+
+    Promise.all(fetches)
       .then(([oppData, allApps, allAthletes]) => {
         setOpportunity(oppData);
         const oppApplications = allApps.filter(app => app.opportunity_id === Number(id));
         setApplications(oppApplications);
-        setAthletes(allAthletes);
+
+        if (allAthletes) {
+          setAthletes(allAthletes);
+        }
+
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, currentAthlete]);
 
   const handleApply = () => {
-    if (applying || !selectedAthleteId) {
-      setApplyError(!selectedAthleteId ? 'Please select an athlete first' : 'Already applying...');
+    if (applying) return;
+
+    const athleteIdToUse = currentAthlete ? currentAthlete.id : Number(selectedAthleteId);
+
+    if (!athleteIdToUse) {
+      setApplyError('Please select an athlete or log in first');
       return;
     }
 
@@ -39,7 +56,7 @@ export default function OpportunityDetail() {
     setApplySuccess(false);
 
     const applicationData = {
-      athlete_id: Number(selectedAthleteId),
+      athlete_id: athleteIdToUse,
       opportunity_id: Number(id),
       status: 'pending'
     };
@@ -56,11 +73,11 @@ export default function OpportunityDetail() {
       .then(newApp => {
         setApplications([...applications, newApp]);
         setApplySuccess(true);
-        setSelectedAthleteId(''); 
+        if (!currentAthlete) setSelectedAthleteId(''); 
         setApplying(false);
       })
       .catch(err => {
-        setApplyError(err.message);
+        setApplyError(err.message || 'Something went wrong');
         setApplying(false);
       });
   };
@@ -79,33 +96,45 @@ export default function OpportunityDetail() {
           <p><span className="text-emerald-400">Country:</span> {opportunity.country || '—'}</p>
         </div>
 
-        <div className="mb-10 bg-slate-900 p-6 rounded-xl border border-slate-700">
-          <h3 className="text-xl font-semibold mb-4 text-emerald-300">Apply as Athlete</h3>
-          
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
+        <div className="mb-12 bg-slate-900 p-8 rounded-xl border border-slate-700">
+          <h3 className="text-xl font-semibold mb-6 text-emerald-300">
+            {currentAthlete ? 'Apply as Yourself' : 'Apply as an Athlete'}
+          </h3>
+
+          <div className="flex flex-col sm:flex-row gap-6 items-end">
             <div className="flex-1 w-full">
-              <label className="block text-sm font-medium mb-2">Select Athlete</label>
-              <select
-                value={selectedAthleteId}
-                onChange={(e) => setSelectedAthleteId(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:border-emerald-500"
-              >
-                <option value="">-- Choose an athlete --</option>
-                {athletes.map(ath => (
-                  <option key={ath.id} value={ath.id}>
-                    {ath.name} ({ath.sport || '—'}, {ath.country || '—'})
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium mb-3">
+                {currentAthlete ? 'Logged in as' : 'Select Athlete'}
+              </label>
+
+              {currentAthlete ? (
+                <div className="w-full px-5 py-4 bg-slate-800 border border-emerald-600/30 rounded-lg text-emerald-300 font-medium flex items-center gap-3">
+                  <span className="text-2xl">👤</span>
+                  {currentAthlete.name} • {currentAthlete.sport || '—'} • {currentAthlete.country || '—'}
+                </div>
+              ) : (
+                <select
+                  value={selectedAthleteId}
+                  onChange={(e) => setSelectedAthleteId(e.target.value)}
+                  className="w-full px-5 py-4 bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="">-- Choose an athlete to apply --</option>
+                  {athletes.map(ath => (
+                    <option key={ath.id} value={ath.id}>
+                      {ath.name} ({ath.sport || '—'}, {ath.country || '—'})
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <button
               onClick={handleApply}
-              disabled={applying || !selectedAthleteId}
-              className={`px-8 py-3 rounded-lg font-bold transition whitespace-nowrap ${
-                applying || !selectedAthleteId
-                  ? 'bg-slate-600 cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-700'
+              disabled={applying || (!currentAthlete && !selectedAthleteId)}
+              className={`min-w-[140px] px-8 py-4 rounded-xl font-bold text-lg transition ${
+                applying || (!currentAthlete && !selectedAthleteId)
+                  ? 'bg-slate-700 cursor-not-allowed text-slate-400'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
               }`}
             >
               {applying ? 'Applying...' : 'Apply Now'}
@@ -113,38 +142,44 @@ export default function OpportunityDetail() {
           </div>
 
           {applySuccess && (
-            <p className="mt-4 text-green-400 font-medium">
-              Application submitted successfully! (Status: pending)
+            <p className="mt-6 text-green-400 font-medium text-center">
+              ✓ Application submitted successfully (pending review)
             </p>
           )}
           {applyError && (
-            <p className="mt-4 text-red-400 font-medium">
+            <p className="mt-6 text-red-400 font-medium text-center">
               {applyError}
             </p>
           )}
         </div>
 
-        <h2 className="text-2xl font-semibold mb-6 text-emerald-400">Applications ({applications.length})</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-emerald-400">
+          Applications Received ({applications.length})
+        </h2>
 
         {applications.length === 0 ? (
-          <p className="text-slate-400">No applications received yet.</p>
+          <p className="text-slate-400 italic">No applications yet — be the first!</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {applications.map(app => (
               <div
                 key={app.id}
                 className="bg-slate-900 p-6 rounded-xl border border-slate-700 flex justify-between items-center"
               >
                 <div>
-                  <p className="font-medium text-lg">Athlete ID: {app.athlete_id}</p>
-                  <p className="text-sm text-slate-400 mt-1">Applied on: {new Date().toLocaleDateString()}</p>
+                  <p className="font-medium text-lg">Athlete #{app.athlete_id}</p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Applied {new Date().toLocaleDateString()}
+                  </p>
                 </div>
-                <span className={`px-5 py-2 rounded-full text-sm font-medium ${
-                  app.status === 'accepted' ? 'bg-green-700 text-green-100' :
-                  app.status === 'rejected' ? 'bg-red-700 text-red-100' :
-                  'bg-yellow-700 text-yellow-100'
-                }`}>
-                  {app.status.toUpperCase()}
+                <span
+                  className={`px-6 py-2 rounded-full text-sm font-semibold uppercase tracking-wide ${
+                    app.status === 'accepted' ? 'bg-green-800 text-green-100' :
+                    app.status === 'rejected' ? 'bg-red-800 text-red-100' :
+                    'bg-yellow-800 text-yellow-100'
+                  }`}
+                >
+                  {app.status}
                 </span>
               </div>
             ))}
