@@ -8,6 +8,7 @@ import Opportunities from './pages/Opportunities';
 import ScoutDetail from './pages/ScoutDetail';
 import OpportunityDetail from './pages/OpportunityDetail';
 import AthleteForm from './pages/AthleteForm';
+import OpportunityForm from './pages/OpportunityForm';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/scouts/:id" element={<ScoutDetail />} />
           <Route path="/opportunities/:id" element={<OpportunityDetail />} />
           <Route path="/athletes/new" element={<AthleteForm />} />
+          <Route path="/opportunities/new" element={<OpportunityForm />} />
           {/* more routes coming */}
         </Routes>
       </div>
