@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Athletes from './pages/Athletes';
 import AthleteDetail from './pages/AthleteDetail';
 import Scouts from './pages/Scouts';
+import Opportunities from './pages/Opportunities';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/athletes" element={<Athletes />} />
           <Route path="/athletes/:id" element={<AthleteDetail />} />
           <Route path="/scouts" element={<Scouts />} />
+          <Route path="/opportunities" element={<Opportunities />} />
           {/* more routes coming */}
         </Routes>
       </div>
