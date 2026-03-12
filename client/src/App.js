@@ -5,6 +5,7 @@ import Athletes from './pages/Athletes';
 import AthleteDetail from './pages/AthleteDetail';
 import Scouts from './pages/Scouts';
 import Opportunities from './pages/Opportunities';
+import ScoutDetail from './pages/ScoutDetail';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/athletes/:id" element={<AthleteDetail />} />
           <Route path="/scouts" element={<Scouts />} />
           <Route path="/opportunities" element={<Opportunities />} />
+          <Route path="/scouts/:id" element={<ScoutDetail />} />
           {/* more routes coming */}
         </Routes>
       </div>
