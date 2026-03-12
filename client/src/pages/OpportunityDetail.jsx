@@ -4,12 +4,12 @@ import { useAuth } from '../context/AuthContext';
 
 export default function OpportunityDetail() {
   const { id } = useParams();
-  const { currentAthlete } = useAuth(); 
+  const { currentAthlete, currentScout } = useAuth();
 
   const [opportunity, setOpportunity] = useState(null);
   const [applications, setApplications] = useState([]);
-  const [athletes, setAthletes] = useState([]); 
-  const [selectedAthleteId, setSelectedAthleteId] = useState(''); 
+  const [athletes, setAthletes] = useState([]);
+  const [selectedAthleteId, setSelectedAthleteId] = useState('');
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
@@ -18,35 +18,31 @@ export default function OpportunityDetail() {
   useEffect(() => {
     const fetches = [
       fetch(`http://127.0.0.1:5555/opportunities/${id}`).then(res => res.json()),
-      fetch('http://127.0.0.1:5555/applications').then(res => res.json())
+      fetch('http://127.0.0.1:5555/applications').then(res => res.json()),
     ];
 
-   
     if (!currentAthlete) {
       fetches.push(fetch('http://127.0.0.1:5555/athletes').then(res => res.json()));
     }
 
     Promise.all(fetches)
-      .then(([oppData, allApps, allAthletes]) => {
+      .then(([oppData, allApps, allAthletes = []]) => {
         setOpportunity(oppData);
-        const oppApplications = allApps.filter(app => app.opportunity_id === Number(id));
-        setApplications(oppApplications);
-
-        if (allAthletes) {
-          setAthletes(allAthletes);
-        }
-
+        const oppApps = allApps.filter(app => app.opportunity_id === Number(id));
+        setApplications(oppApps);
+        setAthletes(allAthletes);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLoading(false);
+      });
   }, [id, currentAthlete]);
 
   const handleApply = () => {
     if (applying) return;
 
-    const athleteIdToUse = currentAthlete ? currentAthlete.id : Number(selectedAthleteId);
-
-    if (!athleteIdToUse) {
+    const athleteId = currentAthlete ? currentAthlete.id : Number(selectedAthleteId);
+    if (!athleteId) {
       setApplyError('Please select an athlete or log in first');
       return;
     }
@@ -55,16 +51,14 @@ export default function OpportunityDetail() {
     setApplyError(null);
     setApplySuccess(false);
 
-    const applicationData = {
-      athlete_id: athleteIdToUse,
-      opportunity_id: Number(id),
-      status: 'pending'
-    };
-
     fetch('http://127.0.0.1:5555/applications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(applicationData)
+      body: JSON.stringify({
+        athlete_id: athleteId,
+        opportunity_id: Number(id),
+        status: 'pending',
+      }),
     })
       .then(res => {
         if (!res.ok) throw new Error('Failed to submit application');
@@ -73,21 +67,43 @@ export default function OpportunityDetail() {
       .then(newApp => {
         setApplications([...applications, newApp]);
         setApplySuccess(true);
-        if (!currentAthlete) setSelectedAthleteId(''); 
+        if (!currentAthlete) setSelectedAthleteId('');
         setApplying(false);
       })
       .catch(err => {
-        setApplyError(err.message || 'Something went wrong');
+        setApplyError(err.message || 'Error submitting application');
         setApplying(false);
       });
   };
 
-  if (loading) return <div className="text-center py-20">Loading opportunity...</div>;
+  const updateStatus = (appId, newStatus) => {
+    fetch(`http://127.0.0.1:5555/applications/${appId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to update status');
+        return res.json();
+      })
+      .then(updated => {
+        setApplications(prev =>
+          prev.map(a => (a.id === appId ? updated : a))
+        );
+      })
+      .catch(err => {
+        alert('Could not update status: ' + err.message);
+      });
+  };
+
+  if (loading) return <div className="text-center py-20">Loading...</div>;
   if (!opportunity) return <div className="text-center py-20 text-red-400">Opportunity not found</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      <Link to="/opportunities" className="text-emerald-400 hover:text-emerald-300 mb-6 inline-block">← Back to Opportunities</Link>
+      <Link to="/opportunities" className="text-emerald-400 hover:text-emerald-300 mb-6 inline-block">
+        ← Back to Opportunities
+      </Link>
 
       <div className="bg-slate-800 border border-slate-700 rounded-2xl p-10">
         <h1 className="text-4xl font-bold mb-2">{opportunity.title}</h1>
@@ -96,9 +112,10 @@ export default function OpportunityDetail() {
           <p><span className="text-emerald-400">Country:</span> {opportunity.country || '—'}</p>
         </div>
 
+        {/* Apply Section */}
         <div className="mb-12 bg-slate-900 p-8 rounded-xl border border-slate-700">
           <h3 className="text-xl font-semibold mb-6 text-emerald-300">
-            {currentAthlete ? 'Apply as Yourself' : 'Apply as an Athlete'}
+            {currentAthlete ? 'Apply as Yourself' : 'Apply to this Opportunity'}
           </h3>
 
           <div className="flex flex-col sm:flex-row gap-6 items-end">
@@ -108,17 +125,16 @@ export default function OpportunityDetail() {
               </label>
 
               {currentAthlete ? (
-                <div className="w-full px-5 py-4 bg-slate-800 border border-emerald-600/30 rounded-lg text-emerald-300 font-medium flex items-center gap-3">
-                  <span className="text-2xl">👤</span>
+                <div className="w-full px-5 py-4 bg-slate-800 border border-emerald-600/30 rounded-lg text-emerald-300 font-medium">
                   {currentAthlete.name} • {currentAthlete.sport || '—'} • {currentAthlete.country || '—'}
                 </div>
               ) : (
                 <select
                   value={selectedAthleteId}
-                  onChange={(e) => setSelectedAthleteId(e.target.value)}
-                  className="w-full px-5 py-4 bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  onChange={e => setSelectedAthleteId(e.target.value)}
+                  className="w-full px-5 py-4 bg-slate-800 border border-slate-600 rounded-lg focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="">-- Choose an athlete to apply --</option>
+                  <option value="">-- Choose an athlete --</option>
                   {athletes.map(ath => (
                     <option key={ath.id} value={ath.id}>
                       {ath.name} ({ath.sport || '—'}, {ath.country || '—'})
@@ -131,7 +147,7 @@ export default function OpportunityDetail() {
             <button
               onClick={handleApply}
               disabled={applying || (!currentAthlete && !selectedAthleteId)}
-              className={`min-w-[140px] px-8 py-4 rounded-xl font-bold text-lg transition ${
+              className={`min-w-[140px] px-8 py-4 rounded-xl font-bold transition ${
                 applying || (!currentAthlete && !selectedAthleteId)
                   ? 'bg-slate-700 cursor-not-allowed text-slate-400'
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -141,46 +157,59 @@ export default function OpportunityDetail() {
             </button>
           </div>
 
-          {applySuccess && (
-            <p className="mt-6 text-green-400 font-medium text-center">
-              ✓ Application submitted successfully (pending review)
-            </p>
-          )}
-          {applyError && (
-            <p className="mt-6 text-red-400 font-medium text-center">
-              {applyError}
-            </p>
-          )}
+          {applySuccess && <p className="mt-6 text-green-400 text-center">Application submitted!</p>}
+          {applyError && <p className="mt-6 text-red-400 text-center">{applyError}</p>}
         </div>
 
+        {/* Applications List + Scout Controls */}
         <h2 className="text-2xl font-semibold mb-6 text-emerald-400">
-          Applications Received ({applications.length})
+          Applications ({applications.length})
         </h2>
 
         {applications.length === 0 ? (
-          <p className="text-slate-400 italic">No applications yet — be the first!</p>
+          <p className="text-slate-400">No applications yet.</p>
         ) : (
           <div className="space-y-5">
             {applications.map(app => (
               <div
                 key={app.id}
-                className="bg-slate-900 p-6 rounded-xl border border-slate-700 flex justify-between items-center"
+                className="bg-slate-900 p-6 rounded-xl border border-slate-700 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6"
               >
                 <div>
-                  <p className="font-medium text-lg">Athlete #{app.athlete_id}</p>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="font-medium text-lg">Athlete ID: {app.athlete_id}</p>
+                  <p className="text-sm text-slate-400 mt-1">
                     Applied {new Date().toLocaleDateString()}
                   </p>
                 </div>
-                <span
-                  className={`px-6 py-2 rounded-full text-sm font-semibold uppercase tracking-wide ${
-                    app.status === 'accepted' ? 'bg-green-800 text-green-100' :
-                    app.status === 'rejected' ? 'bg-red-800 text-red-100' :
-                    'bg-yellow-800 text-yellow-100'
-                  }`}
-                >
-                  {app.status}
-                </span>
+
+                <div className="flex flex-col items-end gap-3">
+                  <span
+                    className={`px-6 py-2 rounded-full text-sm font-semibold uppercase ${
+                      app.status === 'accepted' ? 'bg-green-800 text-green-100' :
+                      app.status === 'rejected' ? 'bg-red-800 text-red-100' :
+                      'bg-yellow-800 text-yellow-100'
+                    }`}
+                  >
+                    {app.status}
+                  </span>
+
+                  {currentScout && app.status === 'pending' && (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => updateStatus(app.id, 'accepted')}
+                        className="px-5 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => updateStatus(app.id, 'rejected')}
+                        className="px-5 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

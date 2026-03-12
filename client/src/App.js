@@ -12,9 +12,10 @@ import OpportunityDetail from './pages/OpportunityDetail';
 import OpportunityForm from './pages/OpportunityForm';
 import MyApplications from './pages/MyApplications';
 import Login from './pages/Login';
+import ScoutLogin from './pages/ScoutLogin';
 
 function AppContent() {
-  const { currentAthlete, logout } = useAuth();
+  const { currentAthlete, currentScout, logout } = useAuth();
   const location = useLocation();
 
   return (
@@ -23,12 +24,10 @@ function AppContent() {
       <nav className="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <Link to="/" className="text-2xl font-bold text-emerald-400">
               AthleteLink
             </Link>
 
-            {/* Navigation Links */}
             <div className="flex items-center gap-8">
               <Link
                 to="/athletes"
@@ -63,7 +62,6 @@ function AppContent() {
                 Opportunities
               </Link>
 
-              {/* Conditional: My Applications (only visible when logged in) */}
               {currentAthlete && (
                 <Link
                   to="/my-applications"
@@ -77,11 +75,23 @@ function AppContent() {
                 </Link>
               )}
 
-              {/* User Area */}
+              {/* User / Auth Area */}
               {currentAthlete ? (
                 <div className="flex items-center gap-6">
                   <span className="text-emerald-300">
-                    Welcome, <strong>{currentAthlete.name.split(' ')[0]}</strong>
+                    Athlete: <strong>{currentAthlete.name.split(' ')[0]}</strong>
+                  </span>
+                  <button
+                    onClick={logout}
+                    className="text-red-400 hover:text-red-300 transition font-medium"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : currentScout ? (
+                <div className="flex items-center gap-6">
+                  <span className="text-emerald-300">
+                    Scout: <strong>{currentScout.name.split(' ')[0]}</strong>
                   </span>
                   <button
                     onClick={logout}
@@ -91,19 +101,21 @@ function AppContent() {
                   </button>
                 </div>
               ) : (
-                <Link
-                  to="/login"
-                  className="text-emerald-400 hover:text-emerald-300 transition font-medium"
-                >
-                  Login as Athlete
-                </Link>
+                <div className="flex items-center gap-6">
+                  <Link to="/login" className="text-emerald-400 hover:text-emerald-300 transition">
+                    Athlete Login
+                  </Link>
+                  <Link to="/scout-login" className="text-emerald-400 hover:text-emerald-300 transition">
+                    Scout Login
+                  </Link>
+                </div>
               )}
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Routes */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/athletes" element={<Athletes />} />
@@ -121,15 +133,15 @@ function AppContent() {
         <Route path="/my-applications" element={<MyApplications />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/scout-login" element={<ScoutLogin />} />
 
-        
         <Route
           path="*"
           element={
             <div className="text-center py-20">
-              <h2 className="text-3xl font-bold text-emerald-400 mb-4">Page Not Found</h2>
+              <h2 className="text-3xl font-bold text-emerald-400 mb-4">404 - Page Not Found</h2>
               <Link to="/" className="text-emerald-400 hover:text-emerald-300">
-                Return to Home
+                Go Home
               </Link>
             </div>
           }
