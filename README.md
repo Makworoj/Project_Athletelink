@@ -18,7 +18,7 @@ AthleteLink is a professional networking and job board application designed to b
 
 | Layer | Technology |
 | --- | --- |
-| **Frontend** | React 18, React Router 6 |
+| **Frontend** | React , React Router  |
 | **Styling** | Tailwind CSS, Heroicons |
 | **State Management** | React Context API (AuthContext) |
 | **Form Handling** | Formik & Yup (Schema-based validation) |
