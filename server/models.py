@@ -7,7 +7,6 @@ from config import db
 # ---------------- ATHLETE MODEL ---------------- #
 
 class Athlete(db.Model, SerializerMixin):
-
     __tablename__ = "athletes"
 
     serialize_rules = ("-applications.athlete", "-scout.athletes")
@@ -17,20 +16,18 @@ class Athlete(db.Model, SerializerMixin):
     sport = db.Column(db.String)
     country = db.Column(db.String)
     age = db.Column(db.Integer)
+    email = db.Column(db.String, unique=True, nullable=False)          
+    password = db.Column(db.String, nullable=True)                      
 
     scout_id = db.Column(db.Integer, db.ForeignKey("scouts.id"))
 
     scout = db.relationship("Scout", back_populates="athletes")
-
     applications = db.relationship("Application", back_populates="athlete")
-
     opportunities = association_proxy("applications", "opportunity")
-
 
 # ---------------- SCOUT MODEL ---------------- #
 
 class Scout(db.Model, SerializerMixin):
-
     __tablename__ = "scouts"
 
     serialize_rules = ("-athletes.scout", "-opportunities.scout")
@@ -39,16 +36,16 @@ class Scout(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     organization = db.Column(db.String)
     country = db.Column(db.String)
+    email = db.Column(db.String, unique=True, nullable=False)          
+    password = db.Column(db.String, nullable=True)                      
 
     athletes = db.relationship("Athlete", back_populates="scout")
-
     opportunities = db.relationship("Opportunity", back_populates="scout")
 
 
 # ---------------- OPPORTUNITY MODEL ---------------- #
 
 class Opportunity(db.Model, SerializerMixin):
-
     __tablename__ = "opportunities"
 
     serialize_rules = ("-applications.opportunity", "-scout.opportunities")
@@ -61,23 +58,19 @@ class Opportunity(db.Model, SerializerMixin):
     scout_id = db.Column(db.Integer, db.ForeignKey("scouts.id"))
 
     scout = db.relationship("Scout", back_populates="opportunities")
-
     applications = db.relationship("Application", back_populates="opportunity")
-
     athletes = association_proxy("applications", "athlete")
 
 
 # ---------------- APPLICATION MODEL ---------------- #
 
 class Application(db.Model, SerializerMixin):
-
     __tablename__ = "applications"
 
     serialize_rules = ("-athlete.applications", "-opportunity.applications")
 
     id = db.Column(db.Integer, primary_key=True)
-
-    status = db.Column(db.String)  # pending / accepted / rejected
+    status = db.Column(db.String)  
 
     athlete_id = db.Column(db.Integer, db.ForeignKey("athletes.id"))
     opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"))
