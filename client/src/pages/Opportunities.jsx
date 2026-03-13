@@ -1,58 +1,118 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Opportunities() {
+  // State for storing the full list of job opportunities from the API
   const [opportunities, setOpportunities] = useState([]);
+  // Boolean state to manage the loading spinner during the fetch request
   const [loading, setLoading] = useState(true);
+  // Captures the text typed into the search bar for filtering results
+  const [searchTerm, setSearchTerm] = useState('');
+  // Accesses the current scout's login status from the global context
+  const { currentScout } = useAuth();
 
   useEffect(() => {
+    // Fetches all opportunity data from the backend when the component first renders
     fetch('http://127.0.0.1:5555/opportunities')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setOpportunities(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error(err);
+      .catch((err) => {
+        console.error("Error fetching opportunities:", err);
         setLoading(false);
       });
   }, []);
 
+  // Creates a subset of opportunities matching the search criteria for title, club, or country
+  const filteredOpps = opportunities.filter((opp) =>
+    opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (opp.club && opp.club.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    opp.country.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Displays a placeholder message while waiting for the data to load
   if (loading) return <div className="text-center py-20 text-slate-400">Loading opportunities...</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-emerald-400">Opportunities</h1>
-        <Link
-          to="/opportunities/new"
-          className="bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-lg font-medium"
-        >
-          + Post New Opportunity
+      {/* Navigation link specifically to help Scouts return to the main dashboard */}
+      <div className="mb-6">
+        <Link to="/" className="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-2">
+          ← Back to Home
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {opportunities.map(opp => (
-          <div
-            key={opp.id}
-            className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-emerald-500 transition"
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div>
+          <h1 className="text-4xl font-bold text-emerald-400 mb-2">Opportunities</h1>
+          <p className="text-slate-400 text-lg">Find your next move in the world of professional sports.</p>
+        </div>
+
+        {/* Conditionally renders the 'Post' button only if a logged-in scout is detected */}
+        {currentScout && (
+          <Link
+            to="/opportunities/new"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition text-center"
           >
-            <h3 className="text-xl font-semibold mb-2">{opp.title}</h3>
-            <div className="space-y-2 text-sm text-slate-400">
-              <p><span className="text-emerald-400">Club:</span> {opp.club || '—'}</p>
-              <p><span className="text-emerald-400">Country:</span> {opp.country || '—'}</p>
-              <p><span className="text-emerald-400">Scout ID:</span> {opp.scout_id || '—'}</p>
-            </div>
-            <Link
-              to={`/opportunities/${opp.id}`}
-              className="mt-4 inline-block text-emerald-400 hover:text-emerald-300 font-medium"
-            >
-              View Details →
-            </Link>
-          </div>
-        ))}
+            + Post New Opportunity
+          </Link>
+        )}
       </div>
+
+      <div className="mb-10">
+        {/* Input field that updates the filter state as the user types */}
+        <input
+          type="text"
+          placeholder="Search by position, club, or country..."
+          className="w-full max-w-xl px-6 py-4 bg-slate-800 border border-slate-700 rounded-2xl focus:outline-none focus:border-emerald-500 text-white placeholder-slate-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {/* Grid of opportunity cards or an empty state message */}
+      {filteredOpps.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredOpps.map((opp) => (
+            <div
+              key={opp.id}
+              className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-emerald-500/50 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <span className="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    {opp.country}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2 leading-tight">{opp.title}</h3>
+                <p className="text-slate-300 font-medium mb-4">{opp.club || "Individual Scout Opportunity"}</p>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-700 flex justify-between items-center">
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500 uppercase font-bold">Posted By</span>
+                  <span className="text-sm text-slate-200">{opp.scout?.name || "Verified Scout"}</span>
+                </div>
+                
+                {/* Dynamic link to view the full details of a specific opportunity */}
+                <Link
+                  to={`/opportunities/${opp.id}`}
+                  className="text-emerald-400 hover:text-emerald-300 font-bold transition"
+                >
+                  View Details →
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-dashed border-slate-700">
+          <p className="text-slate-500 text-xl">No opportunities found matching your search.</p>
+        </div>
+      )}
     </div>
   );
 }

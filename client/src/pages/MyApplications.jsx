@@ -3,24 +3,34 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function MyApplications() {
+  // Retrieves the logged-in athlete's data from the global auth context
   const { currentAthlete } = useAuth();
+  // Provides the ability to redirect users to different pages programmatically
   const navigate = useNavigate();
+  
+  // State for storing applications specifically belonging to the current user
   const [applications, setApplications] = useState([]);
+  // State for storing all available opportunities to cross-reference titles and clubs
   const [opportunities, setOpportunities] = useState([]); 
+  // Tracks the loading status to show a placeholder while data is being fetched
   const [loading, setLoading] = useState(true);
+  // Stores error messages if any of the network requests fail
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Redirects the user to the login page if they are not authenticated as an athlete
     if (!currentAthlete) {
       navigate('/login');
       return;
     }
 
+    // Fetches both applications and opportunities simultaneously for better performance
     Promise.all([
       fetch('http://127.0.0.1:5555/applications').then(res => res.json()),
       fetch('http://127.0.0.1:5555/opportunities').then(res => res.json())
     ])
       .then(([allApps, allOpps]) => {
+        // Filters the master list of applications to find only those belonging to the current user
         const myApps = allApps.filter(
           app => app.athlete_id === currentAthlete.id
         );
@@ -32,12 +42,15 @@ export default function MyApplications() {
         setError('Failed to load your applications');
         setLoading(false);
       });
-  }, [currentAthlete, navigate]);
+  }, [currentAthlete, navigate]); // Effect re-runs if the user logs out or the navigation hook changes
 
+  // Renders nothing if no athlete is logged in to prevent layout flickering during redirect
   if (!currentAthlete) return null; 
 
+  // Displays a loading message while waiting for the database response
   if (loading) return <div className="text-center py-20 text-slate-400">Loading your applications...</div>;
 
+  // Renders an error message if the fetch request was unsuccessful
   if (error) return <div className="text-center py-20 text-red-400">{error}</div>;
 
   return (
@@ -47,6 +60,7 @@ export default function MyApplications() {
         Track the status of opportunities you've applied to
       </p>
 
+      {/* Shows an empty state message if the athlete hasn't applied to anything yet */}
       {applications.length === 0 ? (
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-12 text-center">
           <p className="text-xl text-slate-300 mb-6">You haven't applied to any opportunities yet.</p>
@@ -59,7 +73,9 @@ export default function MyApplications() {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Maps through the user's applications to display individual cards */}
           {applications.map(app => {
+            // Finds the corresponding opportunity details (title, club) using the opportunity_id
             const opp = opportunities.find(o => o.id === app.opportunity_id);
             return (
               <div
@@ -68,6 +84,7 @@ export default function MyApplications() {
               >
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
                   <div>
+                    {/* Links the card title directly to the specific opportunity detail page */}
                     <Link
                       to={`/opportunities/${app.opportunity_id}`}
                       className="text-2xl font-semibold hover:text-emerald-400 transition"
@@ -81,6 +98,7 @@ export default function MyApplications() {
                     )}
                   </div>
 
+                  {/* Dynamically changes the color of the status badge based on its value */}
                   <span
                     className={`px-6 py-2 rounded-full text-sm font-semibold uppercase tracking-wide self-start ${
                       app.status === 'accepted' ? 'bg-green-800 text-green-100' :
