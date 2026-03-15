@@ -1,0 +1,8 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-RESTful
+Flask-Cors
+sqlalchemy-serializer
+Faker
+gunicorn
