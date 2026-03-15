@@ -4,53 +4,45 @@ import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 
 export default function OpportunityDetail() {
-  // Extracts the specific ID from the URL to fetch the correct opportunity
   const { id } = useParams();
-  // Accesses the current user data to determine permissions (Athlete vs Scout)
   const { currentAthlete, currentScout } = useAuth();
-  // Hook used to redirect users after actions like deleting a post
   const navigate = useNavigate();
 
-  // Stores the main opportunity data once fetched from the server
   const [opportunity, setOpportunity] = useState(null);
-  // Holds all applications submitted for this specific opportunity
   const [applications, setApplications] = useState([]);
-  // Tracks if the data is still loading to manage the UI state
   const [loading, setLoading] = useState(true);
-  // Manages the visibility and content of the notification toast
   const [toast, setToast] = useState(null);
 
-  // Toggle state to switch between the detail view and the edit form
   const [isEditing, setIsEditing] = useState(false);
-  // Temporary storage for form inputs when updating opportunity details
   const [editForm, setEditForm] = useState({ title: '', club: '', country: '' });
 
   useEffect(() => {
-    // Runs multiple fetch requests at once to gather opportunity and application data
     Promise.all([
-      fetch(`http://127.0.0.1:5555/opportunities/${id}`).then(res => res.json()),
-      fetch('http://127.0.0.1:5555/applications').then(res => res.json()),
+      fetch(`https://project-athletelink.onrender.com/opportunities/${id}`).then(res => res.json()),
+
+      fetch('https://project-athletelink.onrender.com/applications')
+        .then(res => res.ok ? res.json() : [])
+        .catch(() => [])
     ])
       .then(([oppData, allApps]) => {
         setOpportunity(oppData);
-        // Pre-fills the edit form with existing data for a better user experience
+
         setEditForm({ 
           title: oppData.title || '', 
           club: oppData.club || '', 
           country: oppData.country || '' 
         });
-        // Filters global applications to show only those relevant to this post
+
         setApplications(allApps.filter(app => app.opportunity_id === Number(id)));
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [id]);
 
-  // Removes the opportunity from the database after a user confirmation
   const handleDelete = async () => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`http://127.0.0.1:5555/opportunities/${id}`, { method: 'DELETE' });
+      const res = await fetch(`https://project-athletelink.onrender.com/opportunities/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
       navigate('/opportunities');
     } catch (err) {
@@ -58,11 +50,10 @@ export default function OpportunityDetail() {
     }
   };
 
-  // Sends a PATCH request to update the opportunity details in the backend
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://127.0.0.1:5555/opportunities/${id}`, {
+      const res = await fetch(`https://project-athletelink.onrender.com/opportunities/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
@@ -77,11 +68,10 @@ export default function OpportunityDetail() {
     }
   };
 
-  // Creates a new application entry linking the current athlete to this opportunity
   const handleApply = async () => {
     if (!currentAthlete) return navigate('/login');
     try {
-      const res = await fetch('http://127.0.0.1:5555/applications', {
+      const res = await fetch('https://project-athletelink.onrender.com/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,10 +89,9 @@ export default function OpportunityDetail() {
     }
   };
 
-  // Allows Scouts to change the status of an application to accepted or rejected
   const handleStatusUpdate = async (appId, newStatus) => {
     try {
-      const res = await fetch(`http://127.0.0.1:5555/applications/${appId}`, {
+      const res = await fetch(`https://project-athletelink.onrender.com/applications/${appId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -116,11 +105,9 @@ export default function OpportunityDetail() {
     }
   };
 
-  // Standard loading and error handling displays
   if (loading) return <div className="text-center py-20 text-slate-400">Loading details...</div>;
   if (!opportunity) return <div className="text-center py-20 text-red-400">Opportunity not found</div>;
 
-  // Helper variables to check if the current user has already applied or owns the post
   const userApplication = applications.find(a => a.athlete_id === currentAthlete?.id);
   const isOwner = currentScout && opportunity.scout_id === currentScout.id;
 
@@ -131,7 +118,6 @@ export default function OpportunityDetail() {
           ← Back to Opportunities
         </Link>
         
-        {/* Management controls visible only to the scout who created the post */}
         {isOwner && (
           <div className="flex gap-6 items-center">
             <button onClick={() => setIsEditing(!isEditing)} className="text-slate-400 hover:text-white text-sm transition">
@@ -146,7 +132,6 @@ export default function OpportunityDetail() {
 
       <div className="bg-slate-800 border border-slate-700 rounded-3xl p-10">
         {isEditing ? (
-          /* Form layout for updating existing opportunity data */
           <form onSubmit={handleEditSubmit} className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Edit Opportunity</h2>
             <div className="grid gap-4">
@@ -159,7 +144,6 @@ export default function OpportunityDetail() {
             </button>
           </form>
         ) : (
-          /* Standard display view for public users */
           <>
             <h1 className="text-5xl font-extrabold mb-6 text-white">{opportunity.title}</h1>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-slate-300 mb-10 pb-8 border-b border-slate-700">
@@ -170,7 +154,6 @@ export default function OpportunityDetail() {
           </>
         )}
 
-        {/* Section for Athletes: Shows either the Apply button or their current status */}
         {currentAthlete && (
           <div className="mt-10 text-center">
             {userApplication ? (
@@ -191,7 +174,6 @@ export default function OpportunityDetail() {
           </div>
         )}
 
-        {/* Section for Scouts: Lists all athletes who have applied for this position */}
         {isOwner && !isEditing && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold text-white mb-8">Applicants ({applications.length})</h2>
@@ -218,7 +200,6 @@ export default function OpportunityDetail() {
         )}
       </div>
 
-      {/* Renders a temporary notification if an action succeeds or fails */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );

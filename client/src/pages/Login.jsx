@@ -17,7 +17,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:5555/login', {
+      const response = await fetch('https://project-athletelink.onrender.com/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,9 +33,9 @@ export default function Login() {
       const user = await response.json();
 
       if (user.role === 'athlete') {
-        loginAthlete(user);
+        loginAthlete(user.user);
       } else if (user.role === 'scout') {
-        loginScout(user);
+        loginScout(user.user);
       } else {
         throw new Error('Invalid user role from server');
       }

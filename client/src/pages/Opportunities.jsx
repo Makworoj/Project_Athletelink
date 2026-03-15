@@ -3,18 +3,13 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Opportunities() {
-  // State for storing the full list of job opportunities from the API
   const [opportunities, setOpportunities] = useState([]);
-  // Boolean state to manage the loading spinner during the fetch request
   const [loading, setLoading] = useState(true);
-  // Captures the text typed into the search bar for filtering results
   const [searchTerm, setSearchTerm] = useState('');
-  // Accesses the current scout's login status from the global context
   const { currentScout } = useAuth();
 
   useEffect(() => {
-    // Fetches all opportunity data from the backend when the component first renders
-    fetch('http://127.0.0.1:5555/opportunities')
+    fetch('https://project-athletelink.onrender.com/opportunities')
       .then((res) => res.json())
       .then((data) => {
         setOpportunities(data);
@@ -26,19 +21,16 @@ export default function Opportunities() {
       });
   }, []);
 
-  // Creates a subset of opportunities matching the search criteria for title, club, or country
   const filteredOpps = opportunities.filter((opp) =>
     opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (opp.club && opp.club.toLowerCase().includes(searchTerm.toLowerCase())) ||
     opp.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Displays a placeholder message while waiting for the data to load
   if (loading) return <div className="text-center py-20 text-slate-400">Loading opportunities...</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Navigation link specifically to help Scouts return to the main dashboard */}
       <div className="mb-6">
         <Link to="/" className="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-2">
           ← Back to Home
@@ -51,7 +43,6 @@ export default function Opportunities() {
           <p className="text-slate-400 text-lg">Find your next move in the world of professional sports.</p>
         </div>
 
-        {/* Conditionally renders the 'Post' button only if a logged-in scout is detected */}
         {currentScout && (
           <Link
             to="/opportunities/new"
@@ -63,7 +54,6 @@ export default function Opportunities() {
       </div>
 
       <div className="mb-10">
-        {/* Input field that updates the filter state as the user types */}
         <input
           type="text"
           placeholder="Search by position, club, or country..."
@@ -73,7 +63,6 @@ export default function Opportunities() {
         />
       </div>
 
-      {/* Grid of opportunity cards or an empty state message */}
       {filteredOpps.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredOpps.map((opp) => (
@@ -97,7 +86,6 @@ export default function Opportunities() {
                   <span className="text-sm text-slate-200">{opp.scout?.name || "Verified Scout"}</span>
                 </div>
                 
-                {/* Dynamic link to view the full details of a specific opportunity */}
                 <Link
                   to={`/opportunities/${opp.id}`}
                   className="text-emerald-400 hover:text-emerald-300 font-bold transition"

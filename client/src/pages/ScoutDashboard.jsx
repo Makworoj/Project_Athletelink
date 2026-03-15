@@ -3,36 +3,28 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ScoutDashboard() {
-  // Accesses the logged-in scout's session data from global context
   const { currentScout } = useAuth();
-  // Facilitates programmatic navigation (e.g., redirecting unauthorized users)
   const navigate = useNavigate();
   
-  // Local states to store the scout's specific posts and the resulting athlete applications
   const [opportunities, setOpportunities] = useState([]);
   const [applications, setApplications] = useState([]);
-  // UI states for handling the lifecycle of the data fetch
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Guards the route: if no scout is logged in, send them to the login page
     if (!currentScout) {
       navigate('/scout-login');
       return;
     }
 
-    // Fetches all data in parallel to reduce total waiting time
     Promise.all([
-      fetch('http://127.0.0.1:5555/opportunities').then(res => res.json()),
-      fetch('http://127.0.0.1:5555/applications').then(res => res.json())
+      fetch('https://project-athletelink.onrender.com/opportunities').then(res => res.json()),
+      fetch('https://project-athletelink.onrender.com/applications').then(res => res.json())
     ])
       .then(([allOpps, allApps]) => {
-        // Filters for opportunities created specifically by this scout
         const myOpps = allOpps.filter(opp => opp.scout_id === currentScout.id);
         setOpportunities(myOpps);
 
-        // Identifies all applications that belong to this scout's opportunities
         const myOppIds = myOpps.map(o => o.id);
         const relevantApps = allApps.filter(app => myOppIds.includes(app.opportunity_id));
         setApplications(relevantApps);
@@ -45,16 +37,12 @@ export default function ScoutDashboard() {
       });
   }, [currentScout, navigate]);
 
-  // Prevents the component from rendering content if the redirect is in progress
   if (!currentScout) return null; 
 
-  // Shows a loading indicator while the data is being processed
   if (loading) return <div className="text-center py-20 text-slate-400">Loading your dashboard...</div>;
 
-  // Renders an error message if the server request fails
   if (error) return <div className="text-center py-20 text-red-400">{error}</div>;
 
-  // Calculates real-time totals to populate the status overview cards
   const pending = applications.filter(a => a.status === 'pending').length;
   const accepted = applications.filter(a => a.status === 'accepted').length;
   const rejected = applications.filter(a => a.status === 'rejected').length;
@@ -66,7 +54,6 @@ export default function ScoutDashboard() {
         Manage your posted opportunities and review applications
       </p>
 
-      {/* Quick Stats Grid: Gives the scout an immediate numerical breakdown of talent review */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
           <p className="text-4xl font-bold text-yellow-400 mb-2">{pending}</p>
@@ -92,12 +79,6 @@ export default function ScoutDashboard() {
         </Link>
       </div>
 
-      
-
-[Image of Dashboard metrics UI layout]
-
-
-      {/* Lists all individual opportunities or provides a CTA if none exist */}
       {opportunities.length === 0 ? (
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-12 text-center">
           <p className="text-xl text-slate-300 mb-6">You haven't posted any opportunities yet.</p>
@@ -111,7 +92,6 @@ export default function ScoutDashboard() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {opportunities.map(opp => {
-            // Isolates applications for this specific card
             const oppApps = applications.filter(a => a.opportunity_id === opp.id);
             const pendingCount = oppApps.filter(a => a.status === 'pending').length;
 
@@ -131,7 +111,6 @@ export default function ScoutDashboard() {
                   <span className="text-emerald-400 font-medium">
                     {oppApps.length} application{oppApps.length !== 1 ? 's' : ''}
                   </span>
-                  {/* Highlights if there is urgent work (pending reviews) to be done */}
                   {pendingCount > 0 && (
                     <span className="bg-yellow-800/30 text-yellow-400 border border-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
                       {pendingCount} pending

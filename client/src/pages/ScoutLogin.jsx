@@ -3,26 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';  
 
 export default function ScoutLogin() {
-  // Accesses the global authentication state to log the scout in or out
   const { currentScout, setCurrentScout } = useAuth();
-  // Navigation hook to redirect users once they are successfully authenticated
   const navigate = useNavigate();
   
-  // Local list of all scouts fetched from the database for the dropdown selection
   const [scouts, setScouts] = useState([]);
-  // Tracks the ID of the specific scout selected in the dropdown menu
   const [selectedId, setSelectedId] = useState('');
-  // Manages the visual loading state while the list of scouts is being retrieved
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If a scout is already logged in, redirect them to the home page immediately
     if (currentScout) {
       navigate('/');
     }
 
-    // Fetches the directory of available scouts to populate the login dropdown
-    fetch('http://127.0.0.1:5555/scouts')
+    fetch('https://project-athletelink.onrender.com/scouts')
       .then(res => res.json())
       .then(data => {
         setScouts(data);
@@ -31,23 +24,17 @@ export default function ScoutLogin() {
       .catch(() => setLoading(false));
   }, [currentScout, navigate]);
 
-  // Processes the login by saving the selected scout to context and local storage
   const handleLogin = () => {
     if (!selectedId) return;
     
-    // Finds the full scout object that matches the ID selected in the dropdown
     const scout = scouts.find(s => s.id === Number(selectedId));
     if (scout) {
-      // Persists the session in the browser so the user stays logged in on refresh
       localStorage.setItem('currentScout', JSON.stringify(scout));
-      // Updates the global application state to reflect the active scout
       setCurrentScout(scout);
-      // Sends the newly logged-in scout to the home dashboard
       navigate('/');
     }
   };
 
-  // Simple loading placeholder to prevent layout shift while fetching data
   if (loading) return <div className="text-center py-20 text-slate-400">Loading scouts...</div>;
 
   return (
@@ -56,7 +43,6 @@ export default function ScoutLogin() {
         <h1 className="text-4xl font-bold text-emerald-400 mb-8">Scout Login</h1>
         <p className="text-slate-300 mb-8">Select your scout profile (demo mode)</p>
 
-        {/* Dropdown menu to pick a specific scout persona */}
         <select
           value={selectedId}
           onChange={e => setSelectedId(e.target.value)}
@@ -70,7 +56,6 @@ export default function ScoutLogin() {
           ))}
         </select>
 
-        {/* Login button is disabled until a valid scout is selected */}
         <button
           onClick={handleLogin}
           disabled={!selectedId}
