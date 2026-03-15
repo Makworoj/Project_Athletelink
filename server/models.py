@@ -1,79 +1,86 @@
-from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy.ext.associationproxy import association_proxy
-
 from config import db
+from sqlalchemy_serializer import SerializerMixin
 
-
-# ---------------- ATHLETE MODEL ---------------- #
 
 class Athlete(db.Model, SerializerMixin):
+
     __tablename__ = "athletes"
 
-    serialize_rules = ("-applications.athlete", "-scout.athletes")
-
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
+
+    name = db.Column(db.String)
     sport = db.Column(db.String)
+    position = db.Column(db.String)
     country = db.Column(db.String)
     age = db.Column(db.Integer)
-    email = db.Column(db.String, unique=True, nullable=False)          
-    password = db.Column(db.String, nullable=True)                      
 
-    scout_id = db.Column(db.Integer, db.ForeignKey("scouts.id"))
+    height = db.Column(db.String)
+    weight = db.Column(db.String)
+    achievements = db.Column(db.String)
 
-    scout = db.relationship("Scout", back_populates="athletes")
-    applications = db.relationship("Application", back_populates="athlete")
-    opportunities = association_proxy("applications", "opportunity")
+    email = db.Column(db.String, unique=True)
+    password = db.Column(db.String)
 
-# ---------------- SCOUT MODEL ---------------- #
+    applications = db.relationship("Application", backref="athlete")
+
+    serialize_rules = (
+        "-applications.athlete",
+        "-password",
+    )
+
 
 class Scout(db.Model, SerializerMixin):
+
     __tablename__ = "scouts"
 
-    serialize_rules = ("-athletes.scout", "-opportunities.scout")
-
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
+
+    name = db.Column(db.String)
     organization = db.Column(db.String)
     country = db.Column(db.String)
-    email = db.Column(db.String, unique=True, nullable=False)          
-    password = db.Column(db.String, nullable=True)                      
 
-    athletes = db.relationship("Athlete", back_populates="scout")
-    opportunities = db.relationship("Opportunity", back_populates="scout")
+    email = db.Column(db.String, unique=True)
+    password = db.Column(db.String)
 
+    opportunities = db.relationship("Opportunity", backref="scout")
 
-# ---------------- OPPORTUNITY MODEL ---------------- #
+    serialize_rules = (
+        "-opportunities.scout",
+        "-password",
+    )
+
 
 class Opportunity(db.Model, SerializerMixin):
+
     __tablename__ = "opportunities"
 
-    serialize_rules = ("-applications.opportunity", "-scout.opportunities")
-
     id = db.Column(db.Integer, primary_key=True)
+
     title = db.Column(db.String)
     club = db.Column(db.String)
     country = db.Column(db.String)
 
     scout_id = db.Column(db.Integer, db.ForeignKey("scouts.id"))
 
-    scout = db.relationship("Scout", back_populates="opportunities")
-    applications = db.relationship("Application", back_populates="opportunity")
-    athletes = association_proxy("applications", "athlete")
+    applications = db.relationship("Application", backref="opportunity")
 
+    serialize_rules = (
+        "-applications.opportunity",
+    )
 
-# ---------------- APPLICATION MODEL ---------------- #
 
 class Application(db.Model, SerializerMixin):
+
     __tablename__ = "applications"
 
-    serialize_rules = ("-athlete.applications", "-opportunity.applications")
-
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.String)  
+
+    status = db.Column(db.String)
 
     athlete_id = db.Column(db.Integer, db.ForeignKey("athletes.id"))
     opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"))
 
-    athlete = db.relationship("Athlete", back_populates="applications")
-    opportunity = db.relationship("Opportunity", back_populates="applications")
+    serialize_rules = (
+        "-athlete.applications",
+        "-opportunity.applications",
+    )
