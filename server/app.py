@@ -298,11 +298,13 @@ api.add_resource(ApplicationList, "/applications")
 api.add_resource(ApplicationDetail, "/applications/<int:id>")
 
 
+# ---------------- DATABASE INIT ---------------- #
+
+with app.app_context():
+    db.create_all()
+
+
 # ---------------- RUN SERVER ---------------- #
 
 if __name__ == "__main__":
-
-    with app.app_context():
-        db.create_all()
-
     app.run(host="0.0.0.0", port=5555, debug=True)
