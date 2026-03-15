@@ -33,13 +33,17 @@ app.config["SECRET_KEY"] = "athletelink-secret-key"
 
 # ---------------- DATABASE CONFIGURATION ---------------- #
 
-# If running on Render use persistent disk
-if os.environ.get("RENDER"):
-    database_path = "sqlite:////data/app.db"
-else:
-    database_path = "sqlite:///app.db"
+# Use PostgreSQL on Render, SQLite locally
+database_url = os.environ.get("DATABASE_URL")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = database_path
+if database_url:
+    # Fix Render postgres URL format if needed
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+else:
+    # Local development database
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
