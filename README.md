@@ -1,124 +1,226 @@
-# AthleteLink: Professional Talent Recruitment Platform
+# AthleteLink
 
-AthleteLink is a professional networking and job board application designed to bridge the gap between aspiring athletes and professional sports scouts. The platform empowers scouts to manage talent pipelines and post global opportunities, while athletes can showcase their skills and track their career applications in real-time.
+## Overview
 
----
+AthleteLink is a web platform designed to connect **athletes** with **sports scouts and professional opportunities**. The platform allows athletes to showcase their profiles and apply for opportunities posted by scouts, while scouts can discover talent and manage applications.
 
-##  Key Features
-
-* **Dual-Persona Authentication**: Tailored experiences with specific dashboards and permissions for both **Scouts** and **Athletes**.
-* **Opportunity Management**: Scouts can create, edit, and track job postings (Youth Academies, Professional Trials, and Club Contracts).
-* **Talent & Scout Directories**: Searchable databases to find verified professional scouts and rising athletes.
-* **Application Tracking System (ATS)**: Real-time status updates (Pending, Accepted, Rejected) to keep athletes informed.
-* **Protected Routing**: Secure frontend guards (higher-order components) ensure only authorized scouts can access administrative tools.
+This project was built as a full-stack web application using **React for the frontend** and **Flask for the backend API**, with **SQLAlchemy** managing the database.
 
 ---
 
-## 🛠 Tech Stack
+## Features
 
-| Layer | Technology |
-| --- | --- |
-| **Frontend** | React , React Router  |
-| **Styling** | Tailwind CSS, Heroicons |
-| **State Management** | React Context API (AuthContext) |
-| **Form Handling** | Formik & Yup (Schema-based validation) |
-| **Backend (Expected)** | Python/Flask or Node.js (RESTful API) |
+### Athlete Features
+
+* Create an athlete profile
+* Browse available opportunities
+* Apply to opportunities posted by scouts
+* Track the status of applications (pending, accepted, rejected)
+* View and update personal profile details
+
+### Scout Features
+
+* Create a scout profile
+* Post new sports opportunities
+* View athletes who have applied
+* Accept or reject applications
+* Manage posted opportunities
+
+### Platform Features
+
+* Secure login system
+* RESTful API architecture
+* Database-backed data storage
+* Clean user interface with responsive design
 
 ---
 
-##  Project Structure
+## Tech Stack
 
-```text
-src/
-├── components/        # Reusable UI (Navbar, Toast, PrivateRoutes)
-├── context/           # AuthContext for global user state management
-├── pages/             # Page views (Home, Dashboards, Details, Forms)
-├── App.js             # Navigation structure and Route guards
-└── index.js           # Main application entry point
+### Frontend
+
+* React
+* React Router
+* Formik & Yup (form handling and validation)
+* Tailwind CSS
+* Fetch API
+
+### Backend
+
+* Python
+* Flask
+* Flask-RESTful
+* Flask-SQLAlchemy
+* Flask-Migrate
+* Flask-CORS
+
+### Database
+
+* SQLite (development)
+* PostgreSQL (production compatible)
+
+### Deployment
+
+* Frontend: Vercel
+* Backend API: Render
+
+---
+
+## Project Structure
+
+```
+Project_Athletelink
+│
+├── client
+│   ├── src
+│   │   ├── components
+│   │   ├── context
+│   │   ├── pages
+│   │   └── App.jsx
+│   │
+│   └── package.json
+│
+├── server
+│   ├── models.py
+│   ├── app.py
+│   ├── config.py
+│   └── migrations
+│
+└── README.md
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description               |
+| ------ | -------- | ------------------------- |
+| POST   | `/login` | Login as athlete or scout |
+
+### Athletes
+
+| Method | Endpoint         | Description         |
+| ------ | ---------------- | ------------------- |
+| GET    | `/athletes`      | Get all athletes    |
+| POST   | `/athletes`      | Create athlete      |
+| GET    | `/athletes/<id>` | Get athlete details |
+| PATCH  | `/athletes/<id>` | Update athlete      |
+| DELETE | `/athletes/<id>` | Delete athlete      |
+
+### Scouts
+
+| Method | Endpoint  | Description    |
+| ------ | --------- | -------------- |
+| GET    | `/scouts` | Get all scouts |
+| POST   | `/scouts` | Create scout   |
+
+### Opportunities
+
+| Method | Endpoint              | Description         |
+| ------ | --------------------- | ------------------- |
+| GET    | `/opportunities`      | List opportunities  |
+| POST   | `/opportunities`      | Create opportunity  |
+| GET    | `/opportunities/<id>` | Opportunity details |
+| PATCH  | `/opportunities/<id>` | Update opportunity  |
+| DELETE | `/opportunities/<id>` | Delete opportunity  |
+
+### Applications
+
+| Method | Endpoint             | Description               |
+| ------ | -------------------- | ------------------------- |
+| GET    | `/applications`      | List applications         |
+| POST   | `/applications`      | Create application        |
+| PATCH  | `/applications/<id>` | Update application status |
+
+---
+
+## Installation (Local Development)
+
+### 1. Clone the repository
+
+```
+git clone https://github.com/Makworoj/Project_Athletelink.git
+cd Project_Athletelink
+```
+
+---
+
+### 2. Backend Setup
+
+```
+cd server
+
+pipenv install
+pipenv shell
+
+flask db upgrade
+python app.py
+```
+
+Backend runs on:
+
+```
+https://project-athletelink.onrender.com
 
 ```
 
 ---
 
-##  Setup & Installation
-
-To get AthleteLink running locally, ensure you have both the frontend and backend environments configured.
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/your-username/athlete-link.git
-cd athlete-link
+### 3. Frontend Setup
 
 ```
+cd client
 
-
-2. **Install Frontend dependencies:**
-```bash
 npm install
-
-```
-
-
-3. **Start the Backend API:**
-Ensure your server (default: `http://127.0.0.1:5555`) is running. If using Flask, run:
-```bash
-python server/app.py
-
-```
-
-
-4. **Start the React application:**
-```bash
 npm start
-
 ```
 
+Frontend runs on:
 
-
----
-
-##  User Roles & Workflow
-
-### **For Scouts**
-
-1. **Dashboard Access**: Login to view metrics on pending applications.
-2. **Recruitment**: Post "New Opportunities" with club-specific requirements.
-3. **Talent Review**: Manage athlete applications and update statuses to move talent through the pipeline.
-
-### **For Athletes**
-
-1. **Discovery**: Browse the global list of scouts and filter open opportunities.
-2. **Engagement**: Submit profiles and portfolios to specific job postings.
-3. **Tracking**: Use the "My Applications" portal to monitor scout reviews and feedback.
+```
+https://project-athletelink-o3bbxdxyt-makworojs-projects.vercel.app/
+```
 
 ---
 
-##  API Endpoints Used
+## Deployment
 
-The frontend is designed to interact with a RESTful architecture:
+### Frontend
 
-* `GET /scouts` & `POST /scouts`: Manage scout profiles.
-* `GET /athletes`: Retrieve the global athlete directory.
-* `GET /opportunities` & `POST /opportunities`: CRUD operations for job postings.
-* `GET /applications`: Centralized tracking for application data.
+Hosted on **Vercel**
 
----
+### Backend
 
-##  Collaborators
+Hosted on **Render**
 
-Meet the team behind AthleteLink:
+Production API:
 
-* **James Makworo** — Backend Systems & API Design
-* **James Eshiwani** — Frontend Systems 
-* **Julius Mwangi** — TM
+```
+https://project-athletelink.onrender.com
+```
 
 ---
 
-##  Future Enhancements
+## Future Improvements
 
-* **Real-time Messaging**: Direct, secure chat between scouts and athletes.
-* **Video Highlights**: Native support for performance reels and scout-exclusive footage.
-* **Advanced Filtering**: Granular search by sport type, age group, and salary expectations.
+* Password hashing and authentication security
+* Real scout verification system
+* Athlete performance analytics
+* Messaging between scouts and athletes
+* Athlete media uploads (videos, highlights)
+* Search filters for scouts
 
 ---
 
+## Authors
+
+**James Makworo**
+**James Eshiwani**
+
+---
+
+## License
+
+This project is open source and available under the MIT License.
