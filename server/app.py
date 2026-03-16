@@ -2,6 +2,8 @@
 
 from flask import request
 from flask_restful import Resource
+from sqlalchemy.exc import IntegrityError
+
 from config import app, db, api
 from models import Athlete, Scout, Opportunity, Application
 
@@ -76,8 +78,17 @@ class AthleteList(Resource):
             password=data.get("password")
         )
 
-        db.session.add(athlete)
-        db.session.commit()
+        try:
+            db.session.add(athlete)
+            db.session.commit()
+
+        except IntegrityError:
+            db.session.rollback()
+            return {"error": "Email already exists"}, 400
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
 
         return athlete.to_dict(), 201
 
@@ -156,8 +167,17 @@ class ScoutList(Resource):
             password=data.get("password")
         )
 
-        db.session.add(scout)
-        db.session.commit()
+        try:
+            db.session.add(scout)
+            db.session.commit()
+
+        except IntegrityError:
+            db.session.rollback()
+            return {"error": "Email already exists"}, 400
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
 
         return scout.to_dict(), 201
 
